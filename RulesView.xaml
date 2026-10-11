@@ -1,0 +1,91 @@
+<UserControl x:Class="SharpSaw.RulesView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:local="using:SharpSaw">
+  <Grid x:Name="Host" RowSpacing="10">
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/>
+    </Grid.RowDefinitions>
+
+    <!-- Actions -->
+    <StackPanel Orientation="Horizontal" Spacing="8">
+      <Button Click="AddFiles_Click">
+        <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE710;" FontSize="14"/><TextBlock Text="Ajouter des fichiers…"/></StackPanel>
+      </Button>
+      <Button Click="AddFolder_Click">
+        <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE8F4;" FontSize="14"/><TextBlock Text="Ajouter un dossier…"/></StackPanel>
+      </Button>
+      <Button x:Name="DeleteButton" IsEnabled="False">
+        <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE74D;" FontSize="14"/><TextBlock Text="Supprimer"/></StackPanel>
+        <Button.Flyout>
+          <Flyout>
+            <StackPanel Spacing="8">
+              <TextBlock Text="Supprimer cette règle personnelle ?"/>
+              <Button Content="Confirmer" Click="DeleteConfirm_Click" Style="{StaticResource AccentButtonStyle}"/>
+            </StackPanel>
+          </Flyout>
+        </Button.Flyout>
+      </Button>
+      <Button Click="OpenFolder_Click" ToolTipService.ToolTip="Ouvrir le dossier des règles personnelles">
+        <FontIcon Glyph="&#xED25;" FontSize="14"/>
+      </Button>
+    </StackPanel>
+
+    <!-- Filtres -->
+    <Grid Grid.Row="1" ColumnSpacing="8">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBox x:Name="SearchBox" PlaceholderText="Rechercher une règle (titre, fichier)…" TextChanged="Filter_Changed"/>
+      <ComboBox x:Name="SourceBox" Grid.Column="1" SelectedIndex="0" MinWidth="150" SelectionChanged="Filter_Changed">
+        <ComboBoxItem Content="Toutes"/><ComboBoxItem Content="Sigma"/>
+        <ComboBoxItem Content="Chainsaw"/><ComboBoxItem Content="Personnelles"/>
+      </ComboBox>
+    </Grid>
+
+    <!-- Liste + contenu -->
+    <Grid x:Name="Body" Grid.Row="2" ColumnSpacing="12" RowSpacing="10">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition x:Name="BC2" Width="*"/></Grid.ColumnDefinitions>
+      <Grid.RowDefinitions><RowDefinition Height="*"/><RowDefinition x:Name="BR2" Height="0"/></Grid.RowDefinitions>
+      <ListView x:Name="RuleList" SelectionChanged="List_SelectionChanged" BorderThickness="1"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+        <ListView.ItemTemplate>
+          <DataTemplate x:DataType="local:RuleItem">
+            <Grid ColumnSpacing="10" Padding="0,4">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <FontIcon Glyph="{x:Bind Glyph}" Foreground="{x:Bind Brush}" FontSize="16" VerticalAlignment="Center"/>
+              <StackPanel Grid.Column="1">
+                <TextBlock Text="{x:Bind Title}" TextTrimming="CharacterEllipsis"/>
+                <TextBlock Text="{x:Bind FileName}" Opacity="0.6" FontSize="11" TextTrimming="CharacterEllipsis"/>
+              </StackPanel>
+              <TextBlock Grid.Column="2" Text="{x:Bind Source}" Opacity="0.7" FontSize="12" VerticalAlignment="Center"/>
+            </Grid>
+          </DataTemplate>
+        </ListView.ItemTemplate>
+      </ListView>
+      <TextBox x:Name="RuleText" Grid.Column="1" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+               FontFamily="Consolas" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+               ScrollViewer.VerticalScrollBarVisibility="Auto" Header="Contenu de la règle"/>
+    </Grid>
+
+    <StackPanel Grid.Row="3" Spacing="6">
+      <ProgressBar x:Name="Busy" IsIndeterminate="True" Visibility="Collapsed"/>
+      <TextBlock x:Name="Info" Opacity="0.75" FontSize="12" TextWrapping="Wrap"/>
+    </StackPanel>
+
+    <VisualStateManager.VisualStateGroups>
+      <VisualStateGroup>
+        <VisualState x:Name="Narrow">
+          <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="0"/></VisualState.StateTriggers>
+          <VisualState.Setters>
+            <Setter Target="BC2.Width" Value="0"/>
+            <Setter Target="BR2.Height" Value="*"/>
+            <Setter Target="RuleText.(Grid.Column)" Value="0"/>
+            <Setter Target="RuleText.(Grid.Row)" Value="1"/>
+          </VisualState.Setters>
+        </VisualState>
+        <VisualState x:Name="Wide">
+          <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="1000"/></VisualState.StateTriggers>
+        </VisualState>
+      </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
+  </Grid>
+</UserControl>

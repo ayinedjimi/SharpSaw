@@ -1,0 +1,335 @@
+<Window x:Class="SharpSaw.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:SharpSaw"
+        xmlns:ctk="using:CommunityToolkit.WinUI.Controls"
+        Title="SharpSaw">
+  <Grid x:Name="Root">
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+
+    <!-- Barre de titre personnalisée -->
+    <Grid x:Name="AppTitleBar" Height="36">
+      <StackPanel Orientation="Horizontal" Spacing="8" Margin="12,0,0,0" VerticalAlignment="Center">
+        <FontIcon Glyph="&#xE9D9;" FontSize="16" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+        <TextBlock Text="SharpSaw" FontSize="12"/>
+      </StackPanel>
+    </Grid>
+
+    <SplitView x:Name="Split" Grid.Row="1" DisplayMode="Inline" IsPaneOpen="True" OpenPaneLength="340"
+               PaneBackground="Transparent">
+
+      <!-- ===================== SIDEBAR : toutes les fonctions ===================== -->
+      <SplitView.Pane>
+        <Grid Padding="16,4,16,12" RowSpacing="12">
+          <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+
+          <Grid>
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel Orientation="Horizontal" Spacing="10">
+              <FontIcon Glyph="&#xE9D9;" FontSize="22" Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"/>
+              <TextBlock Text="SharpSaw" Style="{StaticResource SubtitleTextBlockStyle}"/>
+            </StackPanel>
+            <Button Grid.Column="1" Click="About_Click" Background="Transparent" BorderThickness="0"
+                    ToolTipService.ToolTip="À propos de SharpSaw">
+              <FontIcon Glyph="&#xE946;" FontSize="16"/>
+            </Button>
+          </Grid>
+
+          <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollMode="Disabled">
+            <StackPanel Spacing="14" Padding="0,0,10,0">
+              <RadioButtons x:Name="SourceMode" Header="Source des journaux" SelectedIndex="0"
+                            SelectionChanged="SourceMode_SelectionChanged">
+                <x:String>Journaux Windows en direct</x:String>
+                <x:String>Dossier ou fichier .evtx</x:String>
+              </RadioButtons>
+
+              <StackPanel x:Name="ChannelsBlock" Spacing="4">
+                <TextBlock Text="Canaux à analyser"/>
+                <StackPanel x:Name="ChannelsPanel"/>
+                <Grid ColumnSpacing="6">
+                  <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                  <TextBox x:Name="CustomChannel" PlaceholderText="Ajouter un canal personnalisé"
+                           KeyDown="CustomChannel_KeyDown"/>
+                  <Button Grid.Column="1" Click="AddChannel_Click" ToolTipService.ToolTip="Ajouter ce canal">
+                    <FontIcon Glyph="&#xE710;" FontSize="14"/>
+                  </Button>
+                </Grid>
+                <TextBlock x:Name="AdminHint" Opacity="0.65" FontSize="12" TextWrapping="Wrap"
+                           Text="Le journal Security nécessite les droits administrateur."/>
+              </StackPanel>
+
+              <Grid x:Name="FolderPanel" ColumnSpacing="8" Visibility="Collapsed">
+                <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                <TextBox x:Name="EvtxPath" Header="Dossier / fichier .evtx"/>
+                <Button Grid.Column="1" VerticalAlignment="Bottom" Click="BrowseEvtx_Click" ToolTipService.ToolTip="Parcourir…">
+                  <FontIcon Glyph="&#xE838;" FontSize="14"/>
+                </Button>
+              </Grid>
+
+              <SelectorBar x:Name="ModeBar" Margin="-10,0,0,0" SelectionChanged="ModeBar_SelectionChanged">
+                <SelectorBarItem x:Name="HuntItem" Text="Hunt Sigma" IsSelected="True"/>
+                <SelectorBarItem x:Name="SearchItem" Text="Recherche"/>
+              </SelectorBar>
+
+              <StackPanel x:Name="HuntPanel" Spacing="10">
+                <ComboBox x:Name="LevelBox" Header="Niveau minimum" HorizontalAlignment="Stretch" SelectedIndex="0">
+                  <ComboBoxItem Content="(tous)"/><ComboBoxItem Content="low"/><ComboBoxItem Content="medium"/>
+                  <ComboBoxItem Content="high"/><ComboBoxItem Content="critical"/>
+                </ComboBox>
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Depuis"/>
+                  <CalendarDatePicker x:Name="FromDate" PlaceholderText="Sélectionner une date" HorizontalAlignment="Stretch"/>
+                </StackPanel>
+                <StackPanel Spacing="4">
+                  <TextBlock Text="Jusqu'à"/>
+                  <CalendarDatePicker x:Name="ToDate" PlaceholderText="Sélectionner une date" HorizontalAlignment="Stretch"/>
+                </StackPanel>
+                <Button HorizontalAlignment="Stretch" Click="Rules_Click">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE8FD;" FontSize="14"/><TextBlock Text="Voir / ajouter des règles…"/>
+                  </StackPanel>
+                </Button>
+                <TextBlock x:Name="RulesInfo" Text="Règles embarquées…" Opacity="0.65" FontSize="12" TextWrapping="Wrap"/>
+              </StackPanel>
+
+              <StackPanel x:Name="SearchPanel" Spacing="10" Visibility="Collapsed">
+                <TextBox x:Name="Pattern" Header="Motif"/>
+                <CheckBox x:Name="IgnoreCase" Content="Ignorer la casse" IsChecked="True"/>
+                <CheckBox x:Name="UseRegex" Content="Expression régulière"/>
+              </StackPanel>
+
+              <!-- Module IA : grisé tant qu'aucune analyse n'est faite -->
+              <Border Padding="12" CornerRadius="6" BorderThickness="1"
+                      Background="{ThemeResource LayerFillColorDefaultBrush}"
+                      BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+                <StackPanel Spacing="8">
+                  <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE99A;" FontSize="16"/><TextBlock Text="Module IA" FontWeight="SemiBold"/>
+                  </StackPanel>
+                  <Button x:Name="SummaryButton" IsEnabled="False" HorizontalAlignment="Stretch" Click="Summarize_Click"
+                          ToolTipService.ToolTip="Analyse par règles + synthèse par IA locale (Gemma 3, hors ligne)">
+                    <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE8A1;" FontSize="14"/><TextBlock Text="Résumer les détections"/></StackPanel>
+                  </Button>
+                  <TextBlock x:Name="AiHint" Opacity="0.65" FontSize="12" TextWrapping="Wrap"
+                             Text="Disponible après une analyse."/>
+                </StackPanel>
+              </Border>
+            </StackPanel>
+          </ScrollViewer>
+
+          <StackPanel Grid.Row="2" Spacing="8">
+            <TextBlock x:Name="StatusText" Text="Prêt." TextWrapping="Wrap" Opacity="0.8" FontSize="12"/>
+            <Grid ColumnSpacing="8">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <Button x:Name="RunButton" HorizontalAlignment="Stretch" Style="{StaticResource AccentButtonStyle}" Click="Run_Click">
+                <StackPanel Orientation="Horizontal" Spacing="8"><FontIcon Glyph="&#xE768;" FontSize="14"/><TextBlock Text="Lancer"/></StackPanel>
+              </Button>
+              <Button x:Name="CancelButton" Grid.Column="1" IsEnabled="False" Click="Cancel_Click" ToolTipService.ToolTip="Annuler l'analyse en cours">
+                <FontIcon Glyph="&#xE711;" FontSize="14"/>
+              </Button>
+              <Button x:Name="ExportButton" Grid.Column="2" IsEnabled="False" Click="Export_Click"
+                      ToolTipService.ToolTip="Enregistrer les résultats affichés (JSON)">
+                <FontIcon Glyph="&#xE74E;" FontSize="14"/>
+              </Button>
+            </Grid>
+          </StackPanel>
+        </Grid>
+      </SplitView.Pane>
+
+      <!-- ===================== CENTRE : résultats ===================== -->
+      <Grid x:Name="Center" Padding="16,12" RowSpacing="10"
+            Background="{ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}"
+            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1,1,0,0" CornerRadius="8,0,0,0">
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/>
+          <RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Progression : pleine largeur, toujours visible pendant un traitement -->
+        <ProgressBar x:Name="Progress" Maximum="100" Value="0" Visibility="Collapsed" HorizontalAlignment="Stretch"/>
+
+        <!-- Menu + filtre texte + tri -->
+        <Grid Grid.Row="1" ColumnSpacing="8">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+          </Grid.ColumnDefinitions>
+          <Button Click="TogglePane_Click" ToolTipService.ToolTip="Afficher / masquer le panneau latéral">
+            <FontIcon Glyph="&#xE700;" FontSize="14"/>
+          </Button>
+          <TextBox x:Name="FilterBox" Grid.Column="1" PlaceholderText="Filtrer (règle, groupe, contenu de l'événement…)"
+                   TextChanged="Filter_Changed"/>
+          <ComboBox x:Name="SortBox" Grid.Column="2" SelectedIndex="0" MinWidth="130" SelectionChanged="Sort_Changed"
+                    ToolTipService.ToolTip="Trier par">
+            <ComboBoxItem Content="Gravité"/><ComboBoxItem Content="Date"/>
+            <ComboBoxItem Content="Règle"/><ComboBoxItem Content="Groupe"/>
+          </ComboBox>
+          <ToggleButton x:Name="DescToggle" Grid.Column="3" IsChecked="True" Click="Sort_Changed"
+                        ToolTipService.ToolTip="Tri décroissant (cliquer pour passer en croissant)">
+            <FontIcon x:Name="DescIcon" Glyph="&#xE74B;" FontSize="14"/>
+          </ToggleButton>
+        </Grid>
+
+        <!-- Filtres de gravité : ligne dédiée, retour à la ligne automatique, aucune barre de défilement -->
+        <ItemsRepeater x:Name="Chips" Grid.Row="2">
+          <ItemsRepeater.Layout>
+            <UniformGridLayout MinItemWidth="138" MinColumnSpacing="6" MinRowSpacing="6" ItemsStretch="None"/>
+          </ItemsRepeater.Layout>
+          <DataTemplate x:DataType="local:SevChip">
+            <Border Background="{x:Bind ChipBg, Mode=OneWay}" CornerRadius="15" Padding="12,6" MinWidth="128"
+                    BorderThickness="1" BorderBrush="{ThemeResource ControlStrokeColorDefaultBrush}">
+              <StackPanel Orientation="Horizontal" Spacing="7" HorizontalAlignment="Center">
+                <FontIcon Glyph="{x:Bind Glyph}" FontSize="14" Foreground="{x:Bind IconFg, Mode=OneWay}"/>
+                <TextBlock Text="{x:Bind Text, Mode=OneWay}" Foreground="White" FontWeight="SemiBold"
+                           Visibility="{x:Bind OnVisibility, Mode=OneWay}"/>
+                <TextBlock Text="{x:Bind Text, Mode=OneWay}" Visibility="{x:Bind OffVisibility, Mode=OneWay}"/>
+              </StackPanel>
+            </Border>
+          </DataTemplate>
+        </ItemsRepeater>
+
+        <!-- Actions + compteur : zone séparée, jamais recouverte par les chips -->
+        <Grid Grid.Row="3">
+          <TextBlock x:Name="CountText" VerticalAlignment="Center" HorizontalAlignment="Right"
+                     Opacity="0.75" Text="Aucun résultat"/>
+        </Grid>
+
+        <!-- Résumé IA -->
+        <Border x:Name="SummaryPanel" Grid.Row="5" Visibility="Collapsed" Padding="12" CornerRadius="6"
+                Background="{ThemeResource LayerFillColorDefaultBrush}" BorderThickness="1"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}">
+          <Grid RowSpacing="6">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/><RowDefinition Height="Auto"/></Grid.RowDefinitions>
+            <Grid ColumnSpacing="8">
+              <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xE99A;" FontSize="16"/><TextBlock Text="Résumé" FontWeight="SemiBold"/>
+                <ProgressRing x:Name="SummaryRing" Width="16" Height="16" IsActive="False"/>
+                <TextBlock x:Name="SummaryStatus" Opacity="0.7" FontSize="12" VerticalAlignment="Center"/>
+              </StackPanel>
+              <Button x:Name="SummaryStop" Grid.Column="1" Click="SummaryStop_Click" Visibility="Collapsed" Padding="8,2">
+                <StackPanel Orientation="Horizontal" Spacing="6"><FontIcon Glyph="&#xE71A;" FontSize="12"/><TextBlock Text="Stop"/></StackPanel>
+              </Button>
+              <Button Grid.Column="2" Click="SummaryClose_Click" Padding="8,2" ToolTipService.ToolTip="Fermer le résumé">
+                <FontIcon Glyph="&#xE711;" FontSize="12"/>
+              </Button>
+            </Grid>
+            <WebView2 x:Name="SummaryWeb" Grid.Row="1" MinHeight="200"/>
+            <TextBlock Grid.Row="2" Opacity="0.6" FontSize="11" TextWrapping="Wrap"
+                       Text="La synthèse est générée par un petit modèle local : elle peut contenir des erreurs. À vérifier avec les détections."/>
+          </Grid>
+        </Border>
+
+        <!-- Liste + détail : côte à côte (large) ou empilés (étroit), séparés par un séparateur déplaçable -->
+        <Grid x:Name="ResultsGrid" Grid.Row="5">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition x:Name="Col1" Width="3*"/><ColumnDefinition x:Name="ColS" Width="Auto"/><ColumnDefinition x:Name="Col2" Width="2*"/>
+          </Grid.ColumnDefinitions>
+          <Grid.RowDefinitions>
+            <RowDefinition x:Name="Row1" Height="*"/><RowDefinition x:Name="RowS" Height="0"/><RowDefinition x:Name="Row2" Height="0"/>
+          </Grid.RowDefinitions>
+
+          <Grid x:Name="ListPanel" RowSpacing="6">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+            <TextBlock Text="Détections" FontWeight="SemiBold"/>
+            <Grid Grid.Row="1">
+              <ListView x:Name="ResultsList" SelectionChanged="ResultsList_SelectionChanged" BorderThickness="1"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" MinHeight="120">
+                <ListView.ItemTemplate>
+                  <DataTemplate x:DataType="local:Detection">
+                    <Grid ColumnSpacing="12" Padding="0,6" ToolTipService.ToolTip="{x:Bind Name}">
+                      <Grid.ColumnDefinitions><ColumnDefinition Width="Auto"/><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                      <FontIcon Glyph="{x:Bind SeverityGlyph}" Foreground="{x:Bind SeverityBrush}" FontSize="20"
+                                VerticalAlignment="Center" ToolTipService.ToolTip="{x:Bind SeverityLabel}"/>
+                      <StackPanel Grid.Column="1" Spacing="2">
+                        <TextBlock Text="{x:Bind Name}" FontWeight="SemiBold" TextTrimming="CharacterEllipsis"/>
+                        <TextBlock Opacity="0.7" FontSize="12" TextTrimming="CharacterEllipsis">
+                          <Run Text="{x:Bind DisplayTime}"/><Run Text="  ·  "/><Run Text="{x:Bind Group}"/>
+                        </TextBlock>
+                      </StackPanel>
+                      <TextBlock Grid.Column="2" Text="{x:Bind SeverityLabel}" Foreground="{x:Bind SeverityBrush}"
+                                 FontWeight="SemiBold" VerticalAlignment="Center"/>
+                    </Grid>
+                  </DataTemplate>
+                </ListView.ItemTemplate>
+              </ListView>
+              <!-- État vide / analyse en cours -->
+              <StackPanel x:Name="ListOverlay" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12"
+                          IsHitTestVisible="False">
+                <ProgressRing x:Name="OverlayRing" Width="48" Height="48" IsActive="False" Visibility="Collapsed"/>
+                <TextBlock x:Name="OverlayText" Text="Lancez une analyse pour voir les détections" Opacity="0.7"
+                           TextAlignment="Center" TextWrapping="Wrap"/>
+              </StackPanel>
+            </Grid>
+          </Grid>
+
+          <ctk:GridSplitter x:Name="Splitter" Grid.Column="1" ResizeDirection="Columns" Width="12"
+                            VerticalAlignment="Stretch" ToolTipService.ToolTip="Glisser pour redimensionner"/>
+
+          <Grid x:Name="DetailPanel" Grid.Column="2" RowSpacing="6">
+            <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+            <TextBlock Text="Détail (JSON)" FontWeight="SemiBold"/>
+            <Grid Grid.Row="1">
+              <TextBox x:Name="DetailBox" IsReadOnly="True" AcceptsReturn="True" TextWrapping="NoWrap"
+                       FontFamily="Consolas" ScrollViewer.HorizontalScrollBarVisibility="Auto"
+                       ScrollViewer.VerticalScrollBarVisibility="Auto" MinHeight="120"/>
+              <TextBlock x:Name="DetailEmpty" Text="Sélectionnez un événement" Opacity="0.7"
+                         HorizontalAlignment="Center" VerticalAlignment="Center" IsHitTestVisible="False"/>
+            </Grid>
+          </Grid>
+        </Grid>
+      </Grid>
+
+    </SplitView>
+
+    <VisualStateManager.VisualStateGroups>
+      <VisualStateGroup>
+        <!-- Petite fenêtre : panneau en superposition, détail sous la liste -->
+        <VisualState x:Name="Compact">
+          <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="0"/></VisualState.StateTriggers>
+          <VisualState.Setters>
+            <Setter Target="Split.DisplayMode" Value="Overlay"/>
+            <Setter Target="Center.Padding" Value="8"/>
+            <Setter Target="Col2.Width" Value="0"/>
+            <Setter Target="ColS.Width" Value="0"/>
+            <Setter Target="Col1.Width" Value="*"/>
+            <Setter Target="Row1.Height" Value="3*"/>
+            <Setter Target="RowS.Height" Value="Auto"/>
+            <Setter Target="Row2.Height" Value="2*"/>
+            <Setter Target="Splitter.(Grid.Column)" Value="0"/>
+            <Setter Target="Splitter.(Grid.Row)" Value="1"/>
+            <Setter Target="Splitter.ResizeDirection" Value="Rows"/>
+            <Setter Target="Splitter.Width" Value="NaN"/>
+            <Setter Target="Splitter.Height" Value="12"/>
+            <Setter Target="Splitter.HorizontalAlignment" Value="Stretch"/>
+            <Setter Target="DetailPanel.(Grid.Column)" Value="0"/>
+            <Setter Target="DetailPanel.(Grid.Row)" Value="2"/>
+          </VisualState.Setters>
+        </VisualState>
+        <!-- Moyenne : panneau fixe, détail sous la liste -->
+        <VisualState x:Name="Medium">
+          <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="900"/></VisualState.StateTriggers>
+          <VisualState.Setters>
+            <Setter Target="Col2.Width" Value="0"/>
+            <Setter Target="ColS.Width" Value="0"/>
+            <Setter Target="Col1.Width" Value="*"/>
+            <Setter Target="Row1.Height" Value="3*"/>
+            <Setter Target="RowS.Height" Value="Auto"/>
+            <Setter Target="Row2.Height" Value="2*"/>
+            <Setter Target="Splitter.(Grid.Column)" Value="0"/>
+            <Setter Target="Splitter.(Grid.Row)" Value="1"/>
+            <Setter Target="Splitter.ResizeDirection" Value="Rows"/>
+            <Setter Target="Splitter.Width" Value="NaN"/>
+            <Setter Target="Splitter.Height" Value="12"/>
+            <Setter Target="Splitter.HorizontalAlignment" Value="Stretch"/>
+            <Setter Target="DetailPanel.(Grid.Column)" Value="0"/>
+            <Setter Target="DetailPanel.(Grid.Row)" Value="2"/>
+          </VisualState.Setters>
+        </VisualState>
+        <!-- Large : liste et détail côte à côte -->
+        <VisualState x:Name="Wide">
+          <VisualState.StateTriggers><AdaptiveTrigger MinWindowWidth="1300"/></VisualState.StateTriggers>
+        </VisualState>
+      </VisualStateGroup>
+    </VisualStateManager.VisualStateGroups>
+  </Grid>
+</Window>

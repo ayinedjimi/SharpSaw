@@ -1,0 +1,14 @@
+diff --git a/Cargo.toml b/Cargo.toml
+index 0db5105..1a5482d 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -9,6 +9,9 @@ license = "GPL3"
+ edition = "2024"
+ 
+ 
++[workspace]
++members = [".", "ffi"]
++
+ [dependencies]
+ aho-corasick = "1.0"
+ anyhow = "1.0"

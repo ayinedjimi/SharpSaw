@@ -1,0 +1,9 @@
+bin/
+obj/
+.vs/
+*.user
+.build/
+dist/
+# Binaires volumineux ou reconstruits par scripts/build.ps1
+models/*.gguf
+native/chainsaw_ffi.dll

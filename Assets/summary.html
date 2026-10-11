@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+:root{--fg:#1b1b1b;--muted:#5f5f5f;--card:rgba(0,0,0,.04);--line:rgba(0,0,0,.12)}
+@media (prefers-color-scheme:dark){:root{--fg:#f3f3f3;--muted:#b0b0b0;--card:rgba(255,255,255,.06);--line:rgba(255,255,255,.16)}}
+html,body{margin:0;background:transparent;color:var(--fg);font:14px "Segoe UI Variable","Segoe UI",sans-serif}
+body{padding:4px 2px 12px}
+h3{margin:16px 0 8px;font-size:14px}
+.kpi{display:flex;flex-wrap:wrap;gap:8px}
+.kpi div{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:6px 12px}
+.bars{display:grid;grid-template-columns:90px 1fr 48px;gap:6px 10px;align-items:center}
+.bar{height:12px;border-radius:6px;min-width:2px}
+.card{background:var(--card);border:1px solid var(--line);border-left:5px solid var(--c,#888);border-radius:8px;padding:8px 12px;margin:8px 0}
+.card b{display:block;margin-bottom:2px}
+.muted{color:var(--muted);font-size:12px}
+.ai{white-space:pre-wrap;background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 12px;line-height:1.5}
+.ai.pending::after{content:"▍";animation:b 1s steps(2) infinite}
+@keyframes b{50%{opacity:0}}
+#flow{overflow:auto}
+</style></head>
+<body>
+<div id="kpi" class="kpi"></div>
+<h3>Répartition par gravité</h3><div id="bars" class="bars"></div>
+<h3>Thèmes détectés et vérifications</h3><div id="flow"></div>
+<div id="cards"></div>
+<h3>Synthèse (IA)</h3><div id="ai" class="ai muted">En attente…</div>
+<script src="mermaid.min.js"></script>
+<script>
+const dark = matchMedia('(prefers-color-scheme: dark)').matches;
+mermaid.initialize({startOnLoad:false, securityLevel:'strict', theme: dark ? 'dark' : 'default',
+  flowchart:{htmlLabels:true, curve:'basis', useMaxWidth:true}});
+const COL = {4:'#a40e1c',3:'#d85a0a',2:'#b07800',1:'#1e78cd',0:'#6c6c6c'};
+const LAB = {4:'Critique',3:'Haute',2:'Moyenne',1:'Faible',0:'Info'};
+const esc = s => String(s).replace(/[&<>]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+const q = s => String(s).replace(/["\[\]{}()<>#;]/g,' ').replace(/\s+/g,' ').trim();
+let n = 0;
+
+async function setData(d){
+  document.getElementById('kpi').innerHTML =
+    `<div><b>${d.total}</b> détection${d.total>1?'s':''}</div>` +
+    (d.period ? `<div class="muted">${esc(d.period)}</div>` : '') + `<div><b>${d.themes.length}</b> thème${d.themes.length>1?'s':''}</div>`;
+  const max = Math.max(1, ...d.sev.map(s => s.count));
+  document.getElementById('bars').innerHTML = d.sev.filter(s=>s.count>0).map(s =>
+    `<span>${LAB[s.rank]}</span><div class="bar" style="width:${Math.max(2,100*s.count/max)}%;background:${COL[s.rank]}"></div><span>${s.count}</span>`).join('');
+
+  // Diagramme Mermaid : détections -> thèmes -> vérification à faire
+  let g = 'flowchart LR\n  R["' + d.total + ' détections"]\n';
+  d.themes.forEach((t,i) => {
+    g += `  T${i}["${q(t.title)} — ${t.count}"]\n  V${i}["À vérifier : ${q(t.check)}"]\n  R --> T${i} --> V${i}\n`;
+    g += `  style T${i} fill:${COL[t.rank]},color:#fff,stroke:${COL[t.rank]}\n`;
+  });
+  const flow = document.getElementById('flow');
+  try {
+    const out = await mermaid.render('mm' + (++n), g);
+    flow.innerHTML = out.svg;
+  } catch(e){ flow.textContent = 'Diagramme indisponible : ' + e.message; }
+
+  document.getElementById('cards').innerHTML = d.themes.map(t =>
+    `<div class="card" style="--c:${COL[t.rank]}"><b>${esc(t.title)} <span class="muted">· ${t.count} · gravité max ${LAB[t.rank]}</span></b>
+     <div class="muted">${t.rules.map(r=>esc(r)).join(' ; ')}</div>
+     <div>${esc(t.meaning)}</div><div class="muted">Explication possible : ${esc(t.benign)}</div></div>`).join('');
+  setAi('', true);
+}
+function setAi(text, pending){
+  const e = document.getElementById('ai');
+  e.className = 'ai' + (pending ? ' pending' : '');
+  e.textContent = text || (pending ? '' : 'Aucune synthèse.');
+}
+</script>
+</body></html>

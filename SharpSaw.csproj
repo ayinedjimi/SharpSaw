@@ -1,0 +1,44 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.22621.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>SharpSaw</RootNamespace>
+    <AssemblyName>SharpSaw</AssemblyName>
+    <Version>1.0.0</Version>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <Platforms>x64</Platforms>
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <UseWinUI>true</UseWinUI>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>true</WindowsAppSDKSelfContained>
+    <SelfContained>true</SelfContained>
+    <EnableMsixTooling>true</EnableMsixTooling>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <ApplicationIcon>SharpSaw.ico</ApplicationIcon>
+    <!-- Exécutable portable : un seul fichier -->
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <IncludeAllContentForSelfExtract>true</IncludeAllContentForSelfExtract>
+    <EnableCompressionInSingleFile>false</EnableCompressionInSingleFile>
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.6.250108002" />
+    <PackageReference Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.1.240916" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.1742" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Tout est embarqué dans l'assembly : moteur Chainsaw, règles, IA locale (llama.cpp + Gemma 1B), Mermaid, icône. -->
+    <EmbeddedResource Include="native\chainsaw_ffi.dll" LogicalName="chainsaw_ffi.dll" />
+    <EmbeddedResource Include="native\lamazero.dll" LogicalName="lamazero.dll" />
+    <EmbeddedResource Include="models\gemma-3-1b-it-Q4_K_M.gguf" LogicalName="model.gguf" />
+    <EmbeddedResource Include="Assets\mermaid.min.js" LogicalName="mermaid.min.js" />
+    <EmbeddedResource Include="Assets\summary.html" LogicalName="summary.html" />
+    <EmbeddedResource Include="SharpSaw.ico" LogicalName="SharpSaw.ico" />
+    <EmbeddedResource Include="Resources\rules.zip" LogicalName="rules.zip" />
+  </ItemGroup>
+</Project>
