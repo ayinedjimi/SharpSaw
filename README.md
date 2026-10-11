@@ -34,7 +34,7 @@ Prérequis : Windows 10 (1809) ou plus récent, 64 bits.
 Prérequis : [.NET SDK 8](https://dotnet.microsoft.com/download), [Rust](https://rustup.rs/) (`cargo`), Git, Visual Studio Build Tools (charge de travail C++).
 
 ```powershell
-git clone <url-du-dépôt> SharpSaw
+git clone https://github.com/ayinedjimi/SharpSaw.git
 cd SharpSaw
 .\scripts\build.ps1
 ```
