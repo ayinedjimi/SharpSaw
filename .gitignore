@@ -7,3 +7,4 @@ dist/
 # Binaires volumineux ou reconstruits par scripts/build.ps1
 models/*.gguf
 native/chainsaw_ffi.dll
+installer/vc_redist.x64.exe

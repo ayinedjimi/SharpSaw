@@ -23,9 +23,12 @@ SharpSaw applique les règles Sigma et Chainsaw à vos journaux (`.evtx` ou jour
 
 ## Utilisation
 
-1. Téléchargez `SharpSaw.exe` depuis la page [Releases](../../releases).
-2. Lancez-le. Au premier démarrage, l'application extrait ses composants (environ 1,7 Go) : prévoyez de l'espace libre sur le disque et un peu de patience.
-3. Choisissez la source des journaux, puis cliquez sur **Lancer**.
+Depuis la page [Releases](../../releases), deux façons de l'obtenir :
+
+- **`SharpSaw-Setup-<version>.exe` (recommandé)** : installateur Inno Setup. Il installe l'application, crée les raccourcis et, si besoin, le runtime Visual C++ 2015-2022 exigé par les composants natifs.
+- **`SharpSaw.exe`** : version portable. Elle suppose que le [runtime Visual C++](https://aka.ms/vs/17/release/vc_redist.x64.exe) est déjà installé.
+
+Au premier démarrage, l'application extrait ses composants (environ 1,7 Go) : prévoyez de l'espace libre sur le disque et un peu de patience. Choisissez ensuite la source des journaux, puis cliquez sur **Lancer**.
 
 Prérequis : Windows 10 (1809) ou plus récent, 64 bits.
 
@@ -46,6 +49,12 @@ Le script :
 3. publie l'application en un seul fichier dans `dist\SharpSaw.exe`.
 
 Le modèle et la DLL Chainsaw ne sont pas versionnés (taille) : ils sont reconstruits par le script.
+
+Pour produire l'installateur (nécessite [Inno Setup 6](https://jrsoftware.org/isinfo.php)) :
+
+```powershell
+.\scripts\build-installer.ps1 -Version 1.0.0   # -> dist\SharpSaw-Setup-1.0.0.exe
+```
 
 ## Organisation du dépôt
 
